@@ -32,12 +32,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: 'amd64,arm64,arm'
+
       - name: Generate container tags and labels
         id: docker_meta
         uses: docker/metadata-action@v4
         with:
           # images: kubesec/kubesec,ghcr.io/controlplaneio/kubesec
-          images: kubesec/kubesec
+          images: zanhsieh/kubesec
           tags: |
             type=semver,pattern=v{{version}}
             type=semver,pattern=v{{major}}
