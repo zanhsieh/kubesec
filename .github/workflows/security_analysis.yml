@@ -13,14 +13,27 @@ jobs:
   codeql:
     name: CodeQL
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Set go version
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.19.10'
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: go
+
+      - name: Build go files
+        run: |
+          make build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
@@ -28,18 +41,37 @@ jobs:
   trivy:
     name: Trivy
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: 'amd64,arm64,arm'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub Registry
+        uses: docker/login-action@v2
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build an image from Dockerfile
         run: |
-          docker build . -t kubesec:${{ github.sha }}
+          docker buildx build . --platform linux/amd64,linux/arm64,linux/amd64/v2 -t zanhsieh/kubesec:${{ github.sha }} --push
 
       - name: Run Trivy
         uses: aquasecurity/trivy-action@0.10.0
         with:
-          image-ref: kubesec:${{ github.sha }}
+          image-ref: zanhsieh/kubesec:${{ github.sha }}
           format: template
           template: "@/contrib/sarif.tpl"
           output: trivy-results.sarif
@@ -52,6 +84,10 @@ jobs:
   trufflehog:
     name: TruffleHog
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
