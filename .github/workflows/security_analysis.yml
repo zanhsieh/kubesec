@@ -69,7 +69,7 @@ jobs:
           docker buildx build . --platform linux/amd64,linux/arm64,linux/amd64/v2 -t zanhsieh/kubesec:${{ github.sha }} --push
 
       - name: Run Trivy
-        uses: aquasecurity/trivy-action@0.10.0
+        uses: aquasecurity/trivy-action@0.11.2
         with:
           image-ref: zanhsieh/kubesec:${{ github.sha }}
           format: template
@@ -94,7 +94,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Run Trufflehog
-        uses: trufflesecurity/trufflehog@v3.36.0
+        uses: trufflesecurity/trufflehog@v3.40.0
         with:
           path: ./
           base: ${{ github.event.repository.default_branch }}
